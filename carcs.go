@@ -1,19 +1,17 @@
 package arcs
 
-import "sort"
-
-type controlArc struct {
+type CArc struct {
 	Locator  string
 	Order    float64
-	Children []*controlArc
+	Children []*CArc
 }
 
-func Find(node *controlArc, loc string) (*controlArc, int) {
+func (node *CArc) IterQuery(loc string) (*CArc, int) {
 	if node.Locator == loc {
 		return node, -1
 	}
 	for i, c := range node.Children {
-		ret, _ := Find(c, loc)
+		ret, _ := c.IterQuery(loc)
 		if ret != nil {
 			return ret, i
 		}
@@ -21,51 +19,43 @@ func Find(node *controlArc, loc string) (*controlArc, int) {
 	return nil, -1
 }
 
-type Arc struct {
-	Arcrole string
-	Order   float64
-	From    string
-	To      string
-}
-
-func Tree(arcs []Arc, arcrole string) controlArc {
-	var root controlArc
-	root.Children = make([]*controlArc, 0, len(arcs))
-	sort.SliceStable(arcs, func(i, j int) bool { return arcs[i].Order < arcs[j].Order })
+func NewCarc(arcs []Arc, arcrole string) *CArc {
+	var root *CArc
+	root.Children = make([]*CArc, 0, len(arcs))
 	for _, arc := range arcs {
 		if arc.Arcrole == arcrole {
-			from, _ := Find(&root, arc.From)
+			from, _ := root.IterQuery(arc.From)
 			if from != nil {
-				to, toIndex := Find(&root, arc.To)
+				to, toIndex := root.IterQuery(arc.To)
 				if to != nil {
 					root.Children[toIndex] = root.Children[len(root.Children)-1]
 					root.Children = root.Children[:len(root.Children)-1]
 					from.Children = append(from.Children, to)
 				} else {
 					order := arc.Order
-					from.Children = append(from.Children, &controlArc{
+					from.Children = append(from.Children, &CArc{
 						Locator:  arc.To,
 						Order:    order,
-						Children: make([]*controlArc, 0, len(arcs)),
+						Children: make([]*CArc, 0, len(arcs)),
 					})
 				}
 			} else {
-				from = &controlArc{
+				from = &CArc{
 					Locator:  arc.From,
-					Children: make([]*controlArc, 0, len(arcs)),
+					Children: make([]*CArc, 0, len(arcs)),
 				}
 				root.Children = append(root.Children, from)
-				to, toIndex := Find(&root, arc.To)
+				to, toIndex := root.IterQuery(arc.To)
 				if to != nil {
 					root.Children[toIndex] = root.Children[len(root.Children)-1]
 					root.Children = root.Children[:len(root.Children)-1]
 					from.Children = append(from.Children, to)
 				} else {
 					order := arc.Order
-					from.Children = append(from.Children, &controlArc{
+					from.Children = append(from.Children, &CArc{
 						Locator:  arc.To,
 						Order:    order,
-						Children: make([]*controlArc, 0, len(arcs)),
+						Children: make([]*CArc, 0, len(arcs)),
 					})
 				}
 			}
@@ -74,9 +64,7 @@ func Tree(arcs []Arc, arcrole string) controlArc {
 	return root
 }
 
-type Path []string
-
-func Paths(node *controlArc, prior Path) []Path {
+func (node *CArc) Paths(prior Path) []Path {
 	if node == nil {
 		return []Path{}
 	}
@@ -88,7 +76,7 @@ func Paths(node *controlArc, prior Path) []Path {
 	}
 	var ret []Path
 	for _, child := range node.Children {
-		ret = append(ret, Paths(child, newPath)...)
+		ret = append(ret, child.Paths(newPath)...)
 	}
 	return ret
 }
