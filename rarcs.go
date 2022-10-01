@@ -17,7 +17,7 @@ func (node *RArcs) HashQuery(loc string) *RArcs {
 }
 
 func NewRArcs(arcs []Arc, arcrole string) *RArcs {
-	var root *RArcs
+	root := &RArcs{}
 	root.Children = make([]*RArcs, 0, len(arcs))
 	sort.SliceStable(arcs, func(i, j int) bool { return arcs[i].Order < arcs[j].Order })
 	for _, arc := range arcs {

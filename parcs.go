@@ -22,7 +22,7 @@ func (node *PArc) IterQuery(loc string) (*PArc, int) {
 }
 
 func NewPArc(arcs []Arc, arcrole string) *PArc {
-	var root *PArc
+	root := &PArc{}
 	root.Children = make([]*PArc, 0, len(arcs))
 	sort.SliceStable(arcs, func(i, j int) bool { return arcs[i].Order < arcs[j].Order })
 	for _, arc := range arcs {

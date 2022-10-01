@@ -28,7 +28,7 @@ func (node *LArc) IterQuery(loc string) (*LArc, int) {
 }
 
 func NewLArc(arcs []Arc, arcrole string) *LArc {
-	var root *LArc
+	root := &LArc{}
 	root.Children = make([]*LArc, 0, len(arcs))
 	go func() {
 		root.lock.Lock()

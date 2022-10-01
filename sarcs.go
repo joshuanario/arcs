@@ -23,7 +23,7 @@ func (node *SArc) HashQuery(loc string) *SArc {
 }
 
 func NewSArc(arcs []Arc, arcrole string) *SArc {
-	var root *SArc
+	root := &SArc{}
 	root.Children = make([]*SArc, 0, len(arcs))
 	root.hashmap = make(map[string]*SArc)
 	go func() {
