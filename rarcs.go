@@ -16,8 +16,9 @@ func (node *RArcs) HashQuery(loc string) *RArcs {
 	return node.hashmap[loc]
 }
 
-func NewRArcs(arcs []Arc, arcrole string) *RArcs {
+func NewRArc(arcs []Arc, arcrole string) *RArcs {
 	root := &RArcs{}
+	root.hashmap = map[string]*RArcs{}
 	root.Children = make([]*RArcs, 0, len(arcs))
 	sort.SliceStable(arcs, func(i, j int) bool { return arcs[i].Order < arcs[j].Order })
 	for _, arc := range arcs {
@@ -56,6 +57,7 @@ func NewRArcs(arcs []Arc, arcrole string) *RArcs {
 						Locator:  arc.To,
 						Order:    order,
 						Children: make([]*RArcs, 0, len(arcs)),
+						hashmap:  make(map[string]*RArcs),
 					}
 					from.Children = append(from.Children, to)
 					from.hashmap[arc.To] = to
