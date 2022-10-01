@@ -2,62 +2,88 @@ package arcs
 
 import "sort"
 
-type RArcs struct {
+type RArc struct {
 	Locator  string
 	Order    float64
-	Children []*RArcs
-	hashmap  map[string]*RArcs
+	Children []*RArc
+	hashmap  map[string]*RArc
 }
 
-func (node *RArcs) HashQuery(loc string) *RArcs {
+func (node *RArc) HashQuery(loc string) *RArc {
 	if node.Locator == loc {
 		return node
 	}
-	return node.hashmap[loc]
+	val, found := node.hashmap[loc]
+	if found {
+		return val
+	}
+	return nil
 }
 
-func NewRArc(arcs []Arc, arcrole string) *RArcs {
-	root := &RArcs{}
-	root.hashmap = map[string]*RArcs{}
-	root.Children = make([]*RArcs, 0, len(arcs))
+func (node *RArc) getIndex(loc string) int {
+	if node.Locator == loc {
+		return -1
+	}
+	for i, c := range node.Children {
+		if c.Locator == loc {
+			return i
+		}
+	}
+	return -1
+}
+
+func NewRArc(arcs []Arc, arcrole string) *RArc {
+	root := &RArc{}
+	root.hashmap = make(map[string]*RArc)
+	root.Children = make([]*RArc, 0, len(arcs))
 	sort.SliceStable(arcs, func(i, j int) bool { return arcs[i].Order < arcs[j].Order })
 	for _, arc := range arcs {
 		if arc.Arcrole == arcrole {
 			from := root.HashQuery(arc.From)
 			if from != nil {
-				to := root.HashQuery(arc.To)
+				to := from.HashQuery(arc.To)
 				if to != nil {
-					continue
+					toIndex := from.getIndex(arc.To)
+					root.Children[toIndex] = root.Children[len(root.Children)-1]
+					root.Children = root.Children[:len(root.Children)-1]
+					from.Children = append(from.Children, to)
+					from.hashmap[arc.To] = to
+					root.hashmap[arc.To] = to
 				} else {
 					order := arc.Order
-					to = &RArcs{
+					to = &RArc{
 						Locator:  arc.To,
 						Order:    order,
-						Children: make([]*RArcs, 0, len(arcs)),
-						hashmap:  make(map[string]*RArcs),
+						Children: make([]*RArc, 0, len(arcs)),
+						hashmap:  make(map[string]*RArc),
 					}
 					from.Children = append(from.Children, to)
 					from.hashmap[arc.To] = to
 					root.hashmap[arc.To] = to
 				}
 			} else {
-				from = &RArcs{
+				from = &RArc{
 					Locator:  arc.From,
-					Children: make([]*RArcs, 0, len(arcs)),
-					hashmap:  make(map[string]*RArcs),
+					Children: make([]*RArc, 0, len(arcs)),
+					hashmap:  make(map[string]*RArc),
 				}
 				root.Children = append(root.Children, from)
 				root.hashmap[arc.From] = from
 				to := root.HashQuery(arc.To)
 				if to != nil {
-					continue
+					toIndex := root.getIndex(arc.To)
+					root.Children[toIndex] = root.Children[len(root.Children)-1]
+					root.Children = root.Children[:len(root.Children)-1]
+					from.Children = append(from.Children, to)
+					from.hashmap[arc.To] = to
+					root.hashmap[arc.To] = to
 				} else {
 					order := arc.Order
-					to = &RArcs{
+					to = &RArc{
 						Locator:  arc.To,
 						Order:    order,
-						Children: make([]*RArcs, 0, len(arcs)),
-						hashmap:  make(map[string]*RArcs),
+						Children: make([]*RArc, 0, len(arcs)),
+						hashmap:  make(map[string]*RArc),
 					}
 					from.Children = append(from.Children, to)
 					from.hashmap[arc.To] = to
@@ -69,7 +95,7 @@ func NewRArc(arcs []Arc, arcrole string) *RArcs {
 	return root
 }
 
-func (node *RArcs) Paths(prior Path) []Path {
+func (node *RArc) Paths(prior Path) []Path {
 	if node == nil {
 		return []Path{}
 	}
