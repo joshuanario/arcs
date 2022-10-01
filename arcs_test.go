@@ -49,6 +49,35 @@ var testArcs = []Arc{
 	},
 }
 
+func stimulusArcs() []Arc {
+	var ret []Arc
+	ret = append(ret, testArcs...)
+	var ch byte
+	order := 0.0
+	for ch = 'A'; ch <= 'Z'; ch++ {
+		ret = append(ret, Arc{
+			Arcrole: "joshuanario.com",
+			Order:   order,
+			From:    "root",
+			To:      string([]byte{ch, ch}),
+		})
+		ret = append(ret, Arc{
+			Arcrole: "resume.joshuanario.com",
+			Order:   order,
+			From:    "root",
+			To:      string([]byte{ch, ch}),
+		})
+		order++
+	}
+	ret = append(ret, Arc{
+		Arcrole: "joshuanario.com",
+		Order:   order,
+		From:    "ZZ",
+		To:      "A",
+	})
+	return ret
+}
+
 func TestPaths(t *testing.T) {
 	b := &controlArc{
 		Locator: "B",
