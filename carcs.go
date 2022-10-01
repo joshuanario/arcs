@@ -19,7 +19,7 @@ func (node *CArc) IterQuery(loc string) (*CArc, int) {
 	return nil, -1
 }
 
-func NewCarc(arcs []Arc, arcrole string) *CArc {
+func NewCArc(arcs []Arc, arcrole string) *CArc {
 	root := &CArc{}
 	root.Children = make([]*CArc, 0, len(arcs))
 	for _, arc := range arcs {
