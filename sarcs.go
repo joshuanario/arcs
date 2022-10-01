@@ -2,20 +2,28 @@ package arcs
 
 import (
 	"sort"
-	"sync"
+	"time"
 )
+
+const SARC_DURATION = time.Microsecond * 50
 
 type SArc struct {
 	Locator  string
 	Order    float64
 	Children []*SArc
-	lock     sync.RWMutex
+	lock     bool
 	hashmap  map[string]*SArc
 }
 
 func (node *SArc) HashQuery(loc string) *SArc {
-	node.lock.RLock()
-	defer node.lock.RLock()
+	if node.lock {
+		<-time.After(SARC_DURATION)
+		return node.unsafeHashQuery(loc)
+	}
+	return node.unsafeHashQuery(loc)
+}
+
+func (node *SArc) unsafeHashQuery(loc string) *SArc {
 	if node.Locator == loc {
 		return node
 	}
@@ -26,15 +34,15 @@ func NewSArc(arcs []Arc, arcrole string) *SArc {
 	root := &SArc{}
 	root.Children = make([]*SArc, 0, len(arcs))
 	root.hashmap = make(map[string]*SArc)
-	go func() {
-		root.lock.Lock()
-		defer root.lock.Unlock()
-		sort.SliceStable(arcs, func(i, j int) bool { return arcs[i].Order < arcs[j].Order })
-		for _, arc := range arcs {
+	root.lock = true
+	go func(rroot *SArc, aarcs []Arc, aarcrole string) {
+		defer func() { rroot.lock = false }()
+		sort.SliceStable(aarcs, func(i, j int) bool { return aarcs[i].Order < aarcs[j].Order })
+		for _, arc := range aarcs {
 			if arc.Arcrole == arcrole {
-				from := root.HashQuery(arc.From)
+				from := rroot.unsafeHashQuery(arc.From)
 				if from != nil {
-					to := root.HashQuery(arc.To)
+					to := root.unsafeHashQuery(arc.To)
 					if to != nil {
 						continue
 					} else {
@@ -42,22 +50,22 @@ func NewSArc(arcs []Arc, arcrole string) *SArc {
 						to = &SArc{
 							Locator:  arc.To,
 							Order:    order,
-							Children: make([]*SArc, 0, len(arcs)),
+							Children: make([]*SArc, 0, len(aarcs)),
 							hashmap:  make(map[string]*SArc),
 						}
 						from.Children = append(from.Children, to)
 						from.hashmap[arc.To] = to
-						root.hashmap[arc.To] = to
+						rroot.hashmap[arc.To] = to
 					}
 				} else {
 					from = &SArc{
 						Locator:  arc.From,
-						Children: make([]*SArc, 0, len(arcs)),
+						Children: make([]*SArc, 0, len(aarcs)),
 						hashmap:  make(map[string]*SArc),
 					}
-					root.Children = append(root.Children, from)
-					root.hashmap[arc.From] = from
-					to := root.HashQuery(arc.To)
+					rroot.Children = append(rroot.Children, from)
+					rroot.hashmap[arc.From] = from
+					to := rroot.unsafeHashQuery(arc.To)
 					if to != nil {
 						continue
 					} else {
@@ -65,16 +73,16 @@ func NewSArc(arcs []Arc, arcrole string) *SArc {
 						to = &SArc{
 							Locator:  arc.To,
 							Order:    order,
-							Children: make([]*SArc, 0, len(arcs)),
+							Children: make([]*SArc, 0, len(aarcs)),
 						}
 						from.Children = append(from.Children, to)
 						from.hashmap[arc.To] = to
-						root.hashmap[arc.To] = to
+						rroot.hashmap[arc.To] = to
 					}
 				}
 			}
 		}
-	}()
+	}(root, arcs, arcrole)
 	return root
 }
 
@@ -83,8 +91,10 @@ func (node *SArc) Paths(prior Path) []Path {
 		return []Path{}
 	}
 	newPath := append(prior, node.Locator)
-	node.lock.RLock()
-	defer node.lock.RLock()
+	if node.lock {
+		<-time.After(SARC_DURATION)
+		return node.Paths(prior)
+	}
 	if len(node.Children) <= 0 {
 		return []Path{
 			newPath,
