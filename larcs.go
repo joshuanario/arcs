@@ -40,7 +40,7 @@ func NewLArc(arcs []Arc, arcrole string) *LArc {
 	root.Children = make([]*LArc, 0, len(arcs))
 	root.lock = true
 	go func(rroot *LArc, aarcs []Arc, aarcrole string) {
-		defer func() { root.lock = false }()
+		defer func() { rroot.lock = false }()
 		sort.SliceStable(aarcs, func(i, j int) bool { return aarcs[i].Order < aarcs[j].Order })
 		for _, arc := range aarcs {
 			if arc.Arcrole == aarcrole {
