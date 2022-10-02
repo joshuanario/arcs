@@ -5,22 +5,90 @@ import (
 	"time"
 )
 
-const SARC_DURATION = time.Microsecond * 50
+const SARC_DURATION = time.Nanosecond * 500
 
 type SArc struct {
 	Locator  string
 	Order    float64
 	Children []*SArc
+	sorting  bool
 	lock     bool
+	arcs     []Arc
 	hashmap  map[string]*SArc
 }
 
 func (node *SArc) HashQuery(loc string) *SArc {
+	if node.sorting {
+		node.unsafeSort()
+	}
 	if node.lock {
 		<-time.After(SARC_DURATION)
 		return node.HashQuery(loc)
 	}
 	return node.unsafeHashQuery(loc)
+}
+
+func (root *SArc) unsafeSort() {
+	defer func() {
+		root.lock = false
+		root.sorting = false
+	}()
+	root.hashmap = make(map[string]*SArc)
+	arcs := root.arcs
+	sort.SliceStable(arcs, func(i, j int) bool { return arcs[i].Order < arcs[j].Order })
+	for _, arc := range arcs {
+		from := root.unsafeHashQuery(arc.From)
+		if from != nil {
+			to := from.unsafeHashQuery(arc.To)
+			if to != nil {
+				toIndex := from.getIndex(arc.To)
+				from.Children[toIndex] = from.Children[len(from.Children)-1]
+				from.Children = from.Children[:len(from.Children)-1]
+			} else {
+				to = root.unsafeHashQuery(arc.To)
+				if to != nil {
+					toIndex := root.getIndex(arc.To)
+					root.Children[toIndex] = root.Children[len(root.Children)-1]
+					root.Children = root.Children[:len(root.Children)-1]
+				} else {
+					order := arc.Order
+					to = &SArc{
+						Locator:  arc.To,
+						Order:    order,
+						Children: make([]*SArc, 0, len(arcs)),
+						hashmap:  make(map[string]*SArc),
+					}
+				}
+			}
+			from.Children = append(from.Children, to)
+			from.hashmap[arc.To] = to
+			root.hashmap[arc.To] = to
+		} else {
+			from = &SArc{
+				Locator:  arc.From,
+				Children: make([]*SArc, 0, len(arcs)),
+				hashmap:  make(map[string]*SArc),
+			}
+			root.Children = append(root.Children, from)
+			to := root.unsafeHashQuery(arc.To)
+			if to != nil {
+				toIndex := root.getIndex(arc.To)
+				root.Children[toIndex] = root.Children[len(root.Children)-1]
+				root.Children = root.Children[:len(root.Children)-1]
+			} else {
+				order := arc.Order
+				to = &SArc{
+					Locator:  arc.To,
+					Order:    order,
+					Children: make([]*SArc, 0, len(arcs)),
+				}
+			}
+			from.Children = append(from.Children, to)
+			root.hashmap[arc.From] = from
+			from.hashmap[arc.To] = to
+			root.hashmap[arc.To] = to
+		}
+	}
 }
 
 func (node *SArc) unsafeHashQuery(loc string) *SArc {
@@ -44,74 +112,25 @@ func (node *SArc) getIndex(loc string) int {
 
 func NewSArc(arcs []Arc, arcrole string) *SArc {
 	root := &SArc{}
-	root.Children = make([]*SArc, 0, len(arcs))
-	root.hashmap = make(map[string]*SArc)
+	root.Children = make([]*SArc, 0)
+	root.arcs = make([]Arc, 0, len(arcs))
 	root.lock = true
-	go func(rroot *SArc, aarcs []Arc, aarcrole string) {
-		defer func() { rroot.lock = false }()
-		sort.SliceStable(aarcs, func(i, j int) bool { return aarcs[i].Order < aarcs[j].Order })
-		for _, arc := range aarcs {
-			if arc.Arcrole == aarcrole {
-				from := rroot.unsafeHashQuery(arc.From)
-				if from != nil {
-					to := from.unsafeHashQuery(arc.To)
-					if to != nil {
-						toIndex := from.getIndex(arc.To)
-						from.Children[toIndex] = from.Children[len(from.Children)-1]
-						from.Children = from.Children[:len(from.Children)-1]
-					} else {
-						to = rroot.unsafeHashQuery(arc.To)
-						if to != nil {
-							toIndex := rroot.getIndex(arc.To)
-							rroot.Children[toIndex] = rroot.Children[len(rroot.Children)-1]
-							rroot.Children = rroot.Children[:len(rroot.Children)-1]
-						} else {
-							order := arc.Order
-							to = &SArc{
-								Locator:  arc.To,
-								Order:    order,
-								Children: make([]*SArc, 0, len(aarcs)),
-								hashmap:  make(map[string]*SArc),
-							}
-						}
-					}
-					from.Children = append(from.Children, to)
-					from.hashmap[arc.To] = to
-					rroot.hashmap[arc.To] = to
-				} else {
-					from = &SArc{
-						Locator:  arc.From,
-						Children: make([]*SArc, 0, len(aarcs)),
-						hashmap:  make(map[string]*SArc),
-					}
-					rroot.Children = append(rroot.Children, from)
-					to := rroot.unsafeHashQuery(arc.To)
-					if to != nil {
-						toIndex := rroot.getIndex(arc.To)
-						rroot.Children[toIndex] = rroot.Children[len(rroot.Children)-1]
-						rroot.Children = rroot.Children[:len(rroot.Children)-1]
-					} else {
-						order := arc.Order
-						to = &SArc{
-							Locator:  arc.To,
-							Order:    order,
-							Children: make([]*SArc, 0, len(aarcs)),
-						}
-					}
-					from.Children = append(from.Children, to)
-					rroot.hashmap[arc.From] = from
-					from.hashmap[arc.To] = to
-					rroot.hashmap[arc.To] = to
-				}
-			}
+	root.sorting = true
+	for _, arc := range arcs {
+		if arc.Arcrole != arcrole {
+			continue
 		}
-	}(root, arcs, arcrole)
+		root.arcs = append(root.arcs, arc)
+	}
 	return root
 }
 
 func (node *SArc) Paths(prior Path) []Path {
 	if node == nil {
 		return []Path{}
+	}
+	if node.sorting {
+		node.unsafeSort()
 	}
 	if node.lock {
 		<-time.After(SARC_DURATION)

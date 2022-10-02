@@ -89,7 +89,7 @@ func (node *LArc) unsafeIterQuery(loc string) (*LArc, int) {
 
 func NewLArc(arcs []Arc, arcrole string) *LArc {
 	root := &LArc{}
-	root.Children = make([]*LArc, 0, len(arcs))
+	root.Children = make([]*LArc, 0)
 	root.arcs = make([]Arc, 0, len(arcs))
 	root.lock = true
 	root.sorting = true
