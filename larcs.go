@@ -5,21 +5,73 @@ import (
 	"time"
 )
 
-const LARC_DURATION = time.Microsecond * 50
+const LARC_DURATION = time.Nanosecond * 500
 
 type LArc struct {
 	Locator  string
 	Order    float64
 	Children []*LArc
+	sorting  bool
 	lock     bool
+	arcs     []Arc
 }
 
 func (node *LArc) IterQuery(loc string) (*LArc, int) {
+	if node.sorting {
+		node.unsafeSort()
+	}
 	if node.lock {
 		<-time.After(LARC_DURATION)
 		return node.IterQuery(loc)
 	}
 	return node.unsafeIterQuery(loc)
+}
+
+func (root *LArc) unsafeSort() {
+	defer func() {
+		root.lock = false
+		root.sorting = false
+	}()
+	arcs := root.arcs
+	sort.SliceStable(arcs, func(i, j int) bool { return arcs[i].Order < arcs[j].Order })
+	for _, arc := range arcs {
+		from, _ := root.unsafeIterQuery(arc.From)
+		if from != nil {
+			to, toIndex := root.unsafeIterQuery(arc.To)
+			if to != nil {
+				root.Children[toIndex] = root.Children[len(root.Children)-1]
+				root.Children = root.Children[:len(root.Children)-1]
+				from.Children = append(from.Children, to)
+			} else {
+				order := arc.Order
+				from.Children = append(from.Children, &LArc{
+					Locator:  arc.To,
+					Order:    order,
+					Children: make([]*LArc, 0, len(arcs)),
+				})
+			}
+		} else {
+			from = &LArc{
+				Locator:  arc.From,
+				Children: make([]*LArc, 0, len(arcs)),
+			}
+			root.Children = append(root.Children, from)
+			to, toIndex := root.unsafeIterQuery(arc.To)
+			if to != nil {
+				root.Children[toIndex] = root.Children[len(root.Children)-1]
+				root.Children = root.Children[:len(root.Children)-1]
+				from.Children = append(from.Children, to)
+			} else {
+				order := arc.Order
+				from.Children = append(from.Children, &LArc{
+					Locator:  arc.To,
+					Order:    order,
+					Children: make([]*LArc, 0, len(arcs)),
+				})
+			}
+		}
+	}
+	root.arcs = arcs
 }
 
 func (node *LArc) unsafeIterQuery(loc string) (*LArc, int) {
@@ -38,56 +90,24 @@ func (node *LArc) unsafeIterQuery(loc string) (*LArc, int) {
 func NewLArc(arcs []Arc, arcrole string) *LArc {
 	root := &LArc{}
 	root.Children = make([]*LArc, 0, len(arcs))
+	root.arcs = make([]Arc, 0, len(arcs))
 	root.lock = true
-	go func(rroot *LArc, aarcs []Arc, aarcrole string) {
-		defer func() { rroot.lock = false }()
-		sort.SliceStable(aarcs, func(i, j int) bool { return aarcs[i].Order < aarcs[j].Order })
-		for _, arc := range aarcs {
-			if arc.Arcrole == aarcrole {
-				from, _ := rroot.unsafeIterQuery(arc.From)
-				if from != nil {
-					to, toIndex := rroot.unsafeIterQuery(arc.To)
-					if to != nil {
-						rroot.Children[toIndex] = rroot.Children[len(rroot.Children)-1]
-						rroot.Children = rroot.Children[:len(rroot.Children)-1]
-						from.Children = append(from.Children, to)
-					} else {
-						order := arc.Order
-						from.Children = append(from.Children, &LArc{
-							Locator:  arc.To,
-							Order:    order,
-							Children: make([]*LArc, 0, len(aarcs)),
-						})
-					}
-				} else {
-					from = &LArc{
-						Locator:  arc.From,
-						Children: make([]*LArc, 0, len(aarcs)),
-					}
-					rroot.Children = append(rroot.Children, from)
-					to, toIndex := rroot.unsafeIterQuery(arc.To)
-					if to != nil {
-						rroot.Children[toIndex] = root.Children[len(rroot.Children)-1]
-						rroot.Children = rroot.Children[:len(rroot.Children)-1]
-						from.Children = append(from.Children, to)
-					} else {
-						order := arc.Order
-						from.Children = append(from.Children, &LArc{
-							Locator:  arc.To,
-							Order:    order,
-							Children: make([]*LArc, 0, len(aarcs)),
-						})
-					}
-				}
-			}
+	root.sorting = true
+	for _, arc := range arcs {
+		if arc.Arcrole != arcrole {
+			continue
 		}
-	}(root, arcs, arcrole)
+		root.arcs = append(root.arcs, arc)
+	}
 	return root
 }
 
 func (node *LArc) Paths(prior Path) []Path {
 	if node == nil {
 		return []Path{}
+	}
+	if node.sorting {
+		node.unsafeSort()
 	}
 	if node.lock {
 		<-time.After(LARC_DURATION)
