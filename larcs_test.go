@@ -49,7 +49,7 @@ func BenchmarkLArcsPaths(b *testing.B) {
 		start := Path{}
 		output := root.Paths(start)
 		if len(output) != 28 {
-			b.Fatalf("expected 28s paths; outcome %d;\n%v\n", len(output), output)
+			b.Fatalf("expected 28 paths; outcome %d;\n%v\n", len(output), output)
 		}
 	}
 }
