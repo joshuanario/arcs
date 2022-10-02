@@ -44,23 +44,27 @@ func NewRArc(arcs []Arc, arcrole string) *RArc {
 				to := from.HashQuery(arc.To)
 				if to != nil {
 					toIndex := from.getIndex(arc.To)
-					root.Children[toIndex] = root.Children[len(root.Children)-1]
-					root.Children = root.Children[:len(root.Children)-1]
-					from.Children = append(from.Children, to)
-					from.hashmap[arc.To] = to
-					root.hashmap[arc.To] = to
+					from.Children[toIndex] = from.Children[len(from.Children)-1]
+					from.Children = from.Children[:len(from.Children)-1]
 				} else {
-					order := arc.Order
-					to = &RArc{
-						Locator:  arc.To,
-						Order:    order,
-						Children: make([]*RArc, 0, len(arcs)),
-						hashmap:  make(map[string]*RArc),
+					to = root.HashQuery(arc.To)
+					if to != nil {
+						toIndex := root.getIndex(arc.To)
+						root.Children[toIndex] = root.Children[len(root.Children)-1]
+						root.Children = root.Children[:len(root.Children)-1]
+					} else {
+						order := arc.Order
+						to = &RArc{
+							Locator:  arc.To,
+							Order:    order,
+							Children: make([]*RArc, 0, len(arcs)),
+							hashmap:  make(map[string]*RArc),
+						}
 					}
-					from.Children = append(from.Children, to)
-					from.hashmap[arc.To] = to
-					root.hashmap[arc.To] = to
 				}
+				from.Children = append(from.Children, to)
+				from.hashmap[arc.To] = to
+				root.hashmap[arc.To] = to
 			} else {
 				from = &RArc{
 					Locator:  arc.From,
@@ -68,15 +72,11 @@ func NewRArc(arcs []Arc, arcrole string) *RArc {
 					hashmap:  make(map[string]*RArc),
 				}
 				root.Children = append(root.Children, from)
-				root.hashmap[arc.From] = from
 				to := root.HashQuery(arc.To)
 				if to != nil {
 					toIndex := root.getIndex(arc.To)
 					root.Children[toIndex] = root.Children[len(root.Children)-1]
 					root.Children = root.Children[:len(root.Children)-1]
-					from.Children = append(from.Children, to)
-					from.hashmap[arc.To] = to
-					root.hashmap[arc.To] = to
 				} else {
 					order := arc.Order
 					to = &RArc{
@@ -85,10 +85,11 @@ func NewRArc(arcs []Arc, arcrole string) *RArc {
 						Children: make([]*RArc, 0, len(arcs)),
 						hashmap:  make(map[string]*RArc),
 					}
-					from.Children = append(from.Children, to)
-					from.hashmap[arc.To] = to
-					root.hashmap[arc.To] = to
 				}
+				from.Children = append(from.Children, to)
+				root.hashmap[arc.From] = from
+				from.hashmap[arc.To] = to
+				root.hashmap[arc.To] = to
 			}
 		}
 	}
