@@ -27,11 +27,21 @@ func TestCArcsIterQuery(t *testing.T) {
 	}
 }
 
-func BenchmarkCArcsIterQuery(b *testing.B) {
+func BenchmarkCArcs(b *testing.B) {
 	arcs := stimulusArcs()
 	for n := 0; n < b.N; n++ {
 		root := NewCArc(arcs, "joshuanario.com")
-		stimulus := "E"
+		if root == nil {
+			b.Fatalf("expected non-nil root;")
+		}
+	}
+}
+
+func BenchmarkCArcsIterQuery(b *testing.B) {
+	arcs := stimulusArcs()
+	root := NewCArc(arcs, "joshuanario.com")
+	stimulus := "E"
+	for n := 0; n < b.N; n++ {
 		output, _ := root.IterQuery(stimulus)
 		if output == nil {
 			b.Fatalf("expected non-nil locator;")
@@ -44,9 +54,9 @@ func BenchmarkCArcsIterQuery(b *testing.B) {
 
 func BenchmarkCArcsPaths(b *testing.B) {
 	arcs := stimulusArcs()
+	root := NewCArc(arcs, "joshuanario.com")
+	start := Path{}
 	for n := 0; n < b.N; n++ {
-		root := NewCArc(arcs, "joshuanario.com")
-		start := Path{}
 		output := root.Paths(start)
 		if len(output) != 28 {
 			b.Fatalf("expected 28 paths; outcome %d;\n%v\n", len(output), output)

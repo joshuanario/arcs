@@ -27,11 +27,21 @@ func TestSArcsHashQuery(t *testing.T) {
 	}
 }
 
-func BenchmarkSArcsHashQuery(b *testing.B) {
+func BenchmarkSArcs(b *testing.B) {
 	arcs := stimulusArcs()
 	for n := 0; n < b.N; n++ {
 		root := NewSArc(arcs, "joshuanario.com")
-		stimulus := "E"
+		if root == nil {
+			b.Fatalf("expected non-nil root;")
+		}
+	}
+}
+
+func BenchmarkSArcsHashQuery(b *testing.B) {
+	arcs := stimulusArcs()
+	root := NewSArc(arcs, "joshuanario.com")
+	stimulus := "E"
+	for n := 0; n < b.N; n++ {
 		output := root.HashQuery(stimulus)
 		if output == nil {
 			b.Fatalf("expected non-nil locator;")
@@ -44,9 +54,9 @@ func BenchmarkSArcsHashQuery(b *testing.B) {
 
 func BenchmarkSArcsPaths(b *testing.B) {
 	arcs := stimulusArcs()
+	root := NewSArc(arcs, "joshuanario.com")
+	start := Path{}
 	for n := 0; n < b.N; n++ {
-		root := NewSArc(arcs, "joshuanario.com")
-		start := Path{}
 		output := root.Paths(start)
 		if len(output) != 28 {
 			b.Fatalf("expected 28 paths; outcome %d;\n%v\n", len(output), output)
