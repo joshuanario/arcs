@@ -2,7 +2,6 @@ package arcs
 
 import (
 	"sort"
-	"sync"
 	"time"
 )
 
@@ -13,7 +12,6 @@ type SArc struct {
 	Order    float64
 	Children []*SArc
 	lock     bool
-	mutex    sync.Mutex
 	hashmap  map[string]*SArc
 }
 
@@ -29,8 +27,6 @@ func (node *SArc) unsafeHashQuery(loc string) *SArc {
 	if node.Locator == loc {
 		return node
 	}
-	node.mutex.Lock()
-	defer node.mutex.Unlock()
 	return node.hashmap[loc]
 }
 
@@ -80,12 +76,8 @@ func NewSArc(arcs []Arc, arcrole string) *SArc {
 						}
 					}
 					from.Children = append(from.Children, to)
-					from.mutex.Lock()
-					rroot.mutex.Lock()
 					from.hashmap[arc.To] = to
 					rroot.hashmap[arc.To] = to
-					from.mutex.Unlock()
-					rroot.mutex.Unlock()
 				} else {
 					from = &SArc{
 						Locator:  arc.From,
@@ -107,13 +99,9 @@ func NewSArc(arcs []Arc, arcrole string) *SArc {
 						}
 					}
 					from.Children = append(from.Children, to)
-					from.mutex.Lock()
-					rroot.mutex.Lock()
 					rroot.hashmap[arc.From] = from
 					from.hashmap[arc.To] = to
 					rroot.hashmap[arc.To] = to
-					from.mutex.Unlock()
-					rroot.mutex.Unlock()
 				}
 			}
 		}
