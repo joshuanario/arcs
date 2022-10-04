@@ -19,7 +19,8 @@ type SArc struct {
 
 func (node *SArc) HashQuery(loc string) *SArc {
 	if node.sorting {
-		node.unsafeSort()
+		node.sorting = false
+		go node.unsafeSort()
 	}
 	if node.lock {
 		<-time.After(SARC_DURATION)
@@ -31,7 +32,6 @@ func (node *SArc) HashQuery(loc string) *SArc {
 func (root *SArc) unsafeSort() {
 	defer func() {
 		root.lock = false
-		root.sorting = false
 	}()
 	root.hashmap = make(map[string]*SArc)
 	arcs := root.arcs
@@ -132,7 +132,8 @@ func (node *SArc) Paths(prior Path) []Path {
 		return []Path{}
 	}
 	if node.sorting {
-		node.unsafeSort()
+		node.sorting = false
+		go node.unsafeSort()
 	}
 	if node.lock {
 		<-time.After(SARC_DURATION)
