@@ -8,80 +8,25 @@
 | rarcs | preemptive (11000ns) | hash (18ns) |
 | sarcs | lazy (690ns) | hash (12ns) |
 
-carcs
-```
-goos: darwin
-goarch: arm64
-pkg: github.com/joshuanario/arcs
-BenchmarkCArcs-10    	  161680	      6451 ns/op	   17424 B/op	      66 allocs/op
-goos: darwin
-goarch: arm64
-pkg: github.com/joshuanario/arcs
-BenchmarkCArcsIterQuery-10    	 9864424	       103.7 ns/op	       0 B/op	       0 allocs/opgoos: darwin
-goarch: arm64
-pkg: github.com/joshuanario/arcs
-BenchmarkCArcsPaths-10    	  380667	      2756 ns/op	    5256 B/op	      71 allocs/op
-```
 
-parcs
+# benchmarks
 ```
 goos: darwin
 goarch: arm64
 pkg: github.com/joshuanario/arcs
-BenchmarkPArcs-10    	  179299	      6634 ns/op	   17560 B/op	      69 allocs/op
-goos: darwin
-goarch: arm64
-pkg: github.com/joshuanario/arcs
-BenchmarkPArcsIterQuery-10    	10748806	        96.15 ns/op	       0 B/op	       0 allocs/op
-goos: darwin
-goarch: arm64
-pkg: github.com/joshuanario/arcs
-BenchmarkPArcsPaths-10    	  438042	      2728 ns/op	    5256 B/op	      71 allocs/op
-```
-
-larcs
-```
-goos: darwin
-goarch: arm64
-pkg: github.com/joshuanario/arcs
-BenchmarkLArcs-10    	 1709046	       707.7 ns/op	    3536 B/op	       2 allocs/opgoos: darwin
-goarch: arm64
-pkg: github.com/joshuanario/arcs
-BenchmarkLArcsIterQuery-10    	12336084	        97.68 ns/op	       0 B/op	       0 allocs/op
-goos: darwin
-goarch: arm64
-pkg: github.com/joshuanario/arcs
-BenchmarkLArcsPaths-10    	  418954	      2934 ns/op	    5256 B/op	      71 allocs/op
-```
-
-rarcs
-```
-goos: darwin
-goarch: arm64
-pkg: github.com/joshuanario/arcs
-BenchmarkRArcs-10    	   98157	     11407 ns/op	   25561 B/op	     114 allocs/op
-goos: darwin
-goarch: arm64
-pkg: github.com/joshuanario/arcs
-BenchmarkRArcsHashQuery-10    	62999118	        18.86 ns/op	       0 B/op	       0 allocs/op
-goos: darwin
-goarch: arm64
-pkg: github.com/joshuanario/arcs
-BenchmarkRArcsPaths-10    	  366218	      2740 ns/op	    5256 B/op	      71 allocs/op
-```
-
-sarcs
-```
-goos: darwin
-goarch: arm64
-pkg: github.com/joshuanario/arcs
-BenchmarkSArcs-10    	 1728267	       699.2 ns/op	    3552 B/op	       2 allocs/op
-goos: darwin
-goarch: arm64
-pkg: github.com/joshuanario/arcs
-BenchmarkSArcsHashQuery-10    	100125984	        12.01 ns/op	       0 B/op	       0 allocs/op
-goos: darwin
-goarch: arm64
-pkg: github.com/joshuanario/arcs
-BenchmarkSArcsPaths-10    	  347419	      2896 ns/op	    5256 B/op	      71 allocs/op
+BenchmarkCArcs-10             	  161517	      6921 ns/op	   17424 B/op	      66 allocs/op
+BenchmarkCArcsIterQuery-10    	10635060	       111.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCArcsPaths-10        	  401482	      2901 ns/op	    5256 B/op	      71 allocs/op
+BenchmarkLArcs-10             	 1681556	       707.3 ns/op	    3536 B/op	       2 allocs/op
+BenchmarkLArcsIterQuery-10    	11220777	       105.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLArcsPaths-10        	  432184	      2796 ns/op	    5256 B/op	      71 allocs/op
+BenchmarkPArcs-10             	  169105	      6925 ns/op	   17560 B/op	      69 allocs/op
+BenchmarkPArcsIterQuery-10    	11645016	       102.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPArcsPaths-10        	  400548	      2887 ns/op	    5256 B/op	      71 allocs/op
+BenchmarkRArcs-10             	  106341	     11352 ns/op	   25563 B/op	     114 allocs/op
+BenchmarkRArcsHashQuery-10    	59329208	        19.28 ns/op	       0 B/op	       0 allocs/op
+BenchmarkRArcsPaths-10        	  406052	      2878 ns/op	    5256 B/op	      71 allocs/op
+BenchmarkSArcs-10             	 1698196	       705.5 ns/op	    3552 B/op	       2 allocs/op
+BenchmarkSArcsHashQuery-10    	87937592	        12.59 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSArcsPaths-10        	  411038	      2902 ns/op	    5256 B/op	      71 allocs/op
 ```
