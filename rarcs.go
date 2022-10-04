@@ -13,11 +13,7 @@ func (node *RArc) HashQuery(loc string) *RArc {
 	if node.Locator == loc {
 		return node
 	}
-	val, found := node.hashmap[loc]
-	if found {
-		return val
-	}
-	return nil
+	return node.hashmap[loc]
 }
 
 func (node *RArc) getIndex(loc string) int {

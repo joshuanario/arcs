@@ -81,6 +81,7 @@ func (root *SArc) unsafeSort() {
 					Locator:  arc.To,
 					Order:    order,
 					Children: make([]*SArc, 0, len(arcs)),
+					hashmap:  make(map[string]*SArc),
 				}
 			}
 			from.Children = append(from.Children, to)
@@ -89,6 +90,7 @@ func (root *SArc) unsafeSort() {
 			root.hashmap[arc.To] = to
 		}
 	}
+	root.arcs = make([]Arc, 0)
 }
 
 func (node *SArc) unsafeHashQuery(loc string) *SArc {
