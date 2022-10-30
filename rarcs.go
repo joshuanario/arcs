@@ -38,14 +38,14 @@ func NewRArc(arcs []Arc, arcrole string) *RArc {
 			from := root.HashQuery(arc.From)
 			if from != nil {
 				to := from.HashQuery(arc.To)
-				if to != nil {
-					toIndex := from.getIndex(arc.To)
+				toIndex := from.getIndex(arc.To)
+				if to != nil && toIndex >= 0 {
 					from.Children[toIndex] = from.Children[len(from.Children)-1]
 					from.Children = from.Children[:len(from.Children)-1]
 				} else {
 					to = root.HashQuery(arc.To)
-					if to != nil {
-						toIndex := root.getIndex(arc.To)
+					toIndex := root.getIndex(arc.To)
+					if to != nil && toIndex >= 0 {
 						root.Children[toIndex] = root.Children[len(root.Children)-1]
 						root.Children = root.Children[:len(root.Children)-1]
 					} else {
@@ -69,8 +69,8 @@ func NewRArc(arcs []Arc, arcrole string) *RArc {
 				}
 				root.Children = append(root.Children, from)
 				to := root.HashQuery(arc.To)
-				if to != nil {
-					toIndex := root.getIndex(arc.To)
+				toIndex := root.getIndex(arc.To)
+				if to != nil && toIndex >= 0 {
 					root.Children[toIndex] = root.Children[len(root.Children)-1]
 					root.Children = root.Children[:len(root.Children)-1]
 				} else {

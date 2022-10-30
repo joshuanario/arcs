@@ -27,7 +27,7 @@ func NewCArc(arcs []Arc, arcrole string) *CArc {
 			from, _ := root.IterQuery(arc.From)
 			if from != nil {
 				to, toIndex := root.IterQuery(arc.To)
-				if to != nil {
+				if to != nil && toIndex >= 0 {
 					root.Children[toIndex] = root.Children[len(root.Children)-1]
 					root.Children = root.Children[:len(root.Children)-1]
 					from.Children = append(from.Children, to)
@@ -46,7 +46,7 @@ func NewCArc(arcs []Arc, arcrole string) *CArc {
 				}
 				root.Children = append(root.Children, from)
 				to, toIndex := root.IterQuery(arc.To)
-				if to != nil {
+				if to != nil && toIndex >= 0 {
 					root.Children[toIndex] = root.Children[len(root.Children)-1]
 					root.Children = root.Children[:len(root.Children)-1]
 					from.Children = append(from.Children, to)

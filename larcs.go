@@ -38,7 +38,7 @@ func (root *LArc) unsafeSort() {
 		from, _ := root.unsafeIterQuery(arc.From)
 		if from != nil {
 			to, toIndex := root.unsafeIterQuery(arc.To)
-			if to != nil {
+			if to != nil && toIndex >= 0 {
 				root.Children[toIndex] = root.Children[len(root.Children)-1]
 				root.Children = root.Children[:len(root.Children)-1]
 				from.Children = append(from.Children, to)
@@ -57,7 +57,7 @@ func (root *LArc) unsafeSort() {
 			}
 			root.Children = append(root.Children, from)
 			to, toIndex := root.unsafeIterQuery(arc.To)
-			if to != nil {
+			if to != nil && toIndex >= 0 {
 				root.Children[toIndex] = root.Children[len(root.Children)-1]
 				root.Children = root.Children[:len(root.Children)-1]
 				from.Children = append(from.Children, to)
